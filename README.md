@@ -5,7 +5,7 @@ This repo provides minimal, runnable implementations of:
 - **Outcome Reward Model (ORM)** – predicts whether a full solution is correct.
 - **Process Reward Model (PRM)** – scores intermediate reasoning steps.
 
-Both are designed to closely match the definitions and notation in the Reward Modeling chapter of Nathan Lambert’s RLHF book, and each script comes with:
+Both are designed to closely match the definitions and notation in the Reward Modeling chapter of Dr. Nathan Lambert’s RLHF book, and each script comes with:
 
 1. A small training pipeline (LoRA + quantization for efficiency).
 2. A toy evaluation example.
@@ -33,7 +33,7 @@ Both are designed to closely match the definitions and notation in the Reward Mo
 
 ## Book-Style Minimal Snippets
 
-The snippets below are distilled from the full scripts and are intended to match the style of the existing reward-modeling example in the chapter: start from a base LM, add a small head, and define the core loss assuming a dataloader that already constructs `input_ids`, `attention_mask`, and `labels`.
+The snippets below are distilled from the full scripts: start from a base LM, add a small head, and define the core loss assuming a dataloader that already constructs `input_ids`, `attention_mask`, and `labels`.
 
 ### Outcome Reward Model (ORM)
 
@@ -123,4 +123,32 @@ class ProcessRewardModel(nn.Module):
                 # Fully masked batch; keep graph but contribute zero
                 loss = logits.sum() * 0
         return loss, logits
+```
+
+### Most Simplified (Core Loss)
+
+These ultra-minimal snippets show just the loss computation, matching Section 7.3 style in the book.
+
+**ORM:**
+```python
+# Assume model already has: model.lm (backbone) + model.head
+hidden = model.lm(**inputs, output_hidden_states=True).hidden_states[-1]
+logits_per_token = model.head(hidden).squeeze(-1)  # (batch, seq_len)
+
+# Binary labels: 1=correct, 0=incorrect (prompt tokens masked as -100)
+mask = labels != -100
+loss = F.binary_cross_entropy_with_logits(
+    logits_per_token[mask], labels[mask].float()
+)
+```
+
+**PRM:**
+```python
+# Assume model outputs 3-class logits per token
+hidden = model.lm(**inputs, output_hidden_states=True).hidden_states[-1]
+logits = model.head(hidden)  # (batch, seq_len, 3)
+
+# 3-class labels at step boundaries only: 0=-1, 1=0, 2=1 (others masked as -100)
+mask = labels != -100
+loss = F.cross_entropy(logits[mask], labels[mask])
 ```
