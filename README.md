@@ -11,6 +11,13 @@ Both are designed to closely match the definitions and notation in the Reward Mo
 2. A toy evaluation example.
 3. A book-style minimal code snippet (below).
 
+## Quickstart: Run in Colab
+
+You can run the full ORM and PRM MVP pipelines directly in Colab on a GPU T4 (no local setup):
+
+- **ORM Colab:** [Open in Colab](https://colab.research.google.com/drive/1LKS9Fw_nhKQVlvxJWWOjT1MuX5j8Zvy4?usp=sharing)  
+- **PRM Colab:** [Open in Colab](https://colab.research.google.com/drive/15ZFb7_YJzud6qR97h_2ZUemO3hwK6WAL?usp=sharing)
+
 ---
 
 ## Files
@@ -152,3 +159,4 @@ logits = model.head(hidden)  # (batch, seq_len, 3)
 mask = labels != -100
 loss = F.cross_entropy(logits[mask], labels[mask])
 ```
+
